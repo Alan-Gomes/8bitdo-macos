@@ -303,8 +303,7 @@ static uint8_t *read_file(const char *path, size_t *len_out) {
 }
 
 int main(int argc, char **argv) {
-    const char *default_firmware =
-        "build/firmware/ultimate2c-controller-v1.09-bt-rumble-proportional-latch30.dat";
+    const char *default_firmware = "ultimate2c-1.06beta-macos.dat";
     const char *firmware_path = argc > 1 ? argv[1] : default_firmware;
 
     size_t dat_len = 0;

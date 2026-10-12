@@ -1,5 +1,5 @@
 #!/bin/bash
-# Flashes the patched native-rumble firmware to an 8BitDo Ultimate 2C Wireless
+# Flashes the patched macOS support firmware to an 8BitDo Ultimate 2C Wireless
 # controller through its USB bootloader.
 #
 #   I_UNDERSTAND_BRICK_RISK=1 ./flash-firmware.sh [patched-firmware.dat]
@@ -19,7 +19,7 @@ cd "$(dirname "$0")"
 # patching the official 1.06 beta. Build it with ./patch-firmware.sh.
 PATCHED_SHA256="804d6475624c6e9b76381bd40391605bb757c25a84b326a5b4701c2d89523cb6"
 
-FW="${1:-ultimate2c-1.06beta-native-rumble.dat}"
+FW="${1:-ultimate2c-1.06beta-macos.dat}"
 
 if [ ! -f "$FW" ]; then
   echo "no such file: $FW" >&2

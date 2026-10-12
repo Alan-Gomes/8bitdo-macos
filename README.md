@@ -1,19 +1,59 @@
-# 8bitdo-patched
+# 8BitDo Ultimate 2C firmware for macOS support
 
 Patched firmware for the 8BitDo Ultimate 2C Wireless controller with full
 macOS support.
 
+## Disclaimer
+
+This project was developed with AI assistance, including the firmware patch
+tooling and the bootloader tools. Review the code before
+running it.
+
+Flashing modified firmware is done entirely at your own risk. The author is
+not responsible for a bricked controller, lost data, damaged hardware, or any
+other consequences of using this project. If you are not comfortable with
+that, do not flash anything. The official 8BitDo updater can always restore
+stock firmware over USB, but that is not a guarantee of recovery.
+
 ## Requirements
 
 - 8BitDo Ultimate 2C Wireless controller (model `0x301B`)
-- The official 1.06 beta firmware for it, available from the
-  [firmware-ultimate-2c-v1.06-beta release](https://github.com/Alan-Gomes/8bitdo-macos/releases/tag/firmware-ultimate-2c-v1.06-beta)
-  (see the checksums below)
-- macOS with Xcode command line tools (to build the boot tools)
 
 ## Usage
 
-1. Download the 1.06 beta firmware if you do not have it:
+1. Download the patched firmware:
+
+   ```sh
+   curl -LO https://github.com/Alan-Gomes/8bitdo-macos/releases/download/0.01/ultimate2c-1.06beta-macos.dat
+   ```
+
+   `flash-firmware.sh` verifies its SHA-256 before flashing, so a corrupted or
+   wrong download is caught. To build the patched firmware yourself instead,
+   see Building from source.
+
+2. Put the controller in BOOT mode. Hold LB and RB and connect the USB cable.
+
+3. Flash:
+
+   ```sh
+   I_UNDERSTAND_BRICK_RISK=1 ./flash-firmware.sh ultimate2c-1.06beta-macos.dat
+   ```
+
+   The script verifies the firmware hash, builds the boot tools, backs up the
+   controller's current flash to `backups/`, then writes the new firmware and
+   verifies the readback byte-for-byte.
+
+4. Re-pair Bluetooth. If the controller was paired before, forget it first in
+   System Settings, under Bluetooth.
+
+5. Test in a game. The controller should work fully on macOS with nothing else
+   installed.
+
+## Building from source
+
+To build the patched firmware from the official 1.06 beta:
+
+1. Download the 1.06 beta firmware:
 
    ```sh
    curl -LO https://github.com/Alan-Gomes/8bitdo-macos/releases/download/firmware-ultimate-2c-v1.06-beta/8bitdo-ultimate-2c-wireless_v1.06-beta_model-0x301B.dat
@@ -26,37 +66,18 @@ macOS support.
    ```
 
    The script verifies the SHA-256 of both the input and the output. Output:
-   `ultimate2c-1.06beta-native-rumble.dat`.
-
-3. Put the controller in BOOT mode. It must enumerate as `8BitDo Boot`
-   (USB VID:PID `0x2dc8:0x3208`). The tools refuse anything else.
-
-4. Flash:
-
-   ```sh
-   I_UNDERSTAND_BRICK_RISK=1 ./flash-firmware.sh
-   ```
-
-   The script verifies the firmware hash, builds the boot tools, backs up the
-   controller's current flash to `backups/`, then writes the new firmware and
-   verifies the readback byte-for-byte.
-
-5. Re-pair Bluetooth. If the controller was paired before, forget it first in
-   System Settings, under Bluetooth.
-
-6. Test in a game. The controller should work fully on macOS with nothing else
-   installed.
+   `ultimate2c-1.06beta-macos.dat`.
 
 ## Checksums
 
 | File | SHA-256 |
 |---|---|
 | Input: official 1.06 beta (`0x301B`) | `11c8d195d3ca76da24a33ba92ad9d7ae8ad6f455244864bed4c66898e9074bfb` |
-| Output: patched firmware | `804d6475624c6e9b76381bd40391605bb757c25a84b326a5b4701c2d89523cb6` |
+| Patched firmware, released and built | `804d6475624c6e9b76381bd40391605bb757c25a84b326a5b4701c2d89523cb6` |
 
 `patch-firmware.sh` refuses any input that does not match the first hash and
 any output that does not match the second. `flash-firmware.sh` refuses to flash
-anything that does not match the second.
+anything that does not match the second, including the released download.
 
 ## What the patch changes
 
@@ -117,5 +138,3 @@ run without `I_UNDERSTAND_BRICK_RISK=1` and always takes a backup first.
 - Games that rumble through macOS GameController haptics, a DualSense-only
   API, still will not rumble. SDL-based rumble works.
 - Tested on one Mac and one controller.
-- The patched firmware derives from 8BitDo's firmware, so do not redistribute
-  it. The patch tooling here is MIT, same as the research repo it came from.

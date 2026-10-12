@@ -1,23 +1,25 @@
 #!/usr/bin/env python3
-"""Native-rumble firmware patch for the Ultimate 2C Wireless (1.06 beta base).
+"""macOS support firmware patch for the Ultimate 2C Wireless (1.06 beta base).
 
-Goal: make standard SDL (2.x/3.x) rumble the controller over Bluetooth with no
-shim, no daemon, no workaround.
+Goal: make macOS and game libraries treat the controller as a fully supported
+device, including native Bluetooth rumble, with no shim, no daemon, no
+workaround.
 
 How it works
 ------------
-SDL ships a built-in 8BitDo HIDAPI driver (SDL_hidapi_8bitdo.c) that claims
-several 8BitDo PIDs over Bluetooth (SF30/SN30/Pro2/Pro3...). For those devices
-it probes *feature report 6*; if the probe succeeds it enables rumble and sends
-rumble as a 5-byte output report: [0x05, low, high, 0, 0] via IOHIDDeviceSetReport.
+Game libraries ship a built-in 8BitDo HIDAPI driver that claims several 8BitDo
+PIDs over Bluetooth (SF30/SN30/Pro2/Pro3...). For those devices it probes
+*feature report 6*; if the probe succeeds it enables rumble and sends rumble
+as a 5-byte output report: [0x05, low, high, 0, 0] via IOHIDDeviceSetReport.
 
-The 1.06 beta advertises PID 0x6002, which no SDL driver claims, so SDL falls
-back to the IOKit driver, whose rumble path needs macOS ForceFeedback support
-the device does not expose -> no rumble.
+The 1.06 beta advertises PID 0x6002, which no library driver claims, so the
+library falls back to the IOKit driver, whose rumble path needs macOS
+ForceFeedback support the device does not expose.
 
-This patch makes the controller look like a device SDL already supports:
+This patch makes the controller look like a device the library already
+supports:
 
-  1. PnP ID  0x6002 -> 0x6101 (8BitDo SN30 Pro BT), so SDL's 8BitDo driver
+  1. PnP ID  0x6002 -> 0x6101 (8BitDo SN30 Pro BT), so the 8BitDo driver
      claims the device and runs its feature-report-6 probe.
   2. Add a feature-report-6 characteristic by repurposing the *boot keyboard
      output report* slot (handle 0x14), which macOS ignores in report-protocol
@@ -243,7 +245,7 @@ def main() -> None:
         description="Patch the Ultimate 2C Wireless 1.06 beta for native SDL rumble over Bluetooth."
     )
     parser.add_argument("src", nargs="?", default="8bitdo-ultimate-2c-wireless_v1.06-beta_model-0x301B.dat")
-    parser.add_argument("dst", nargs="?", default="ultimate2c-1.06beta-native-rumble.dat")
+    parser.add_argument("dst", nargs="?", default="ultimate2c-1.06beta-macos.dat")
     args = parser.parse_args()
     patch_firmware(Path(args.src), Path(args.dst))
 

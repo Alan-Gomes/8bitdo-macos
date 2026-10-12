@@ -1,5 +1,5 @@
 #!/bin/bash
-# Applies the native-rumble patch to an 8BitDo Ultimate 2C Wireless 1.06 beta
+# Applies the macOS support patch to an 8BitDo Ultimate 2C Wireless 1.06 beta
 # firmware file.
 #
 #   ./patch-firmware.sh /path/to/8bitdo-ultimate-2c-wireless_v1.06-beta_model-0x301B.dat [output.dat]
@@ -17,7 +17,7 @@ BETA_SHA256="11c8d195d3ca76da24a33ba92ad9d7ae8ad6f455244864bed4c66898e9074bfb"
 PATCHED_SHA256="804d6475624c6e9b76381bd40391605bb757c25a84b326a5b4701c2d89523cb6"
 
 SRC="${1:-}"
-DST="${2:-ultimate2c-1.06beta-native-rumble.dat}"
+DST="${2:-ultimate2c-1.06beta-macos.dat}"
 
 if [ -z "$SRC" ]; then
   echo "usage: ./patch-firmware.sh /path/to/8bitdo-ultimate-2c-wireless_v1.06-beta_model-0x301B.dat [output.dat]"
@@ -38,7 +38,7 @@ if [ "$ACTUAL" != "$BETA_SHA256" ]; then
 fi
 echo "  input ok (1.06 beta, model 0x301B)"
 
-python3 patch_ultimate2c_native_rumble.py "$SRC" "$DST"
+python3 patch_ultimate2c_macos.py "$SRC" "$DST"
 
 echo "verifying output firmware..."
 ACTUAL="$(shasum -a 256 "$DST" | awk '{print $1}')"
