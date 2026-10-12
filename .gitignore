@@ -1,0 +1,4 @@
+build/
+backups/
+*.dat
+*.bin
