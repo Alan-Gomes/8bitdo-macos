@@ -11,8 +11,7 @@ A firmware patch changes what the controller presents to the host:
 - it repairs the rumble path, so Apple's haptics stack (and every game that
   uses it) can drive the motors.
 
-Verified on macOS (Apple Silicon, macOS 27), including in the native Wind
-Waker HD port, which detects and uses the controller without configuration.
+Verified on macOS (Apple Silicon, macOS 27).
 
 ## Disclaimer
 
@@ -25,6 +24,68 @@ not responsible for a bricked controller, lost data, damaged hardware, or any
 other consequences of using this project. The official 8BitDo updater can
 always restore stock firmware over USB, and `flash-firmware.sh` always takes a
 backup first, but that is not a guarantee of recovery.
+
+## Requirements
+
+- 8BitDo Ultimate 2C Wireless controller (model `0x301B`)
+- The official 1.06 beta firmware as input (the only supported base image)
+- macOS with Xcode command line tools (`clang`) to build the tools
+
+## Usage
+
+### Quick start: flash the prebuilt firmware
+
+Download the patched firmware:
+
+```sh
+curl -LO https://github.com/Alan-Gomes/8bitdo-macos/releases/download/0.02/ultimate2c-1.06beta-xbox-full.dat
+```
+
+Then follow [Flashing](#flashing) below.
+
+### Flashing
+
+1. Put the controller in BOOT mode: hold **LB + RB** while plugging in the USB
+   cable. It enumerates as "8BitDo Boot".
+
+2. Flash:
+
+   ```sh
+   I_UNDERSTAND_BRICK_RISK=1 ./flash-firmware.sh ultimate2c-1.06beta-xbox-full.dat
+   ```
+
+   The script verifies the firmware hash, builds the boot tools, backs up the
+   controller's current flash to `backups/`, then writes the new firmware and
+   verifies the readback byte-for-byte.
+
+3. Forget and re-pair the controller in System Settings, under Bluetooth.
+
+4. Test. It appears in System Settings as a gamepad and works in any game
+   that accepts an Xbox controller. If it does not, check that it was
+   re-paired after flashing.
+
+To restore stock firmware, flash the unmodified 1.06 beta or any `backups/`
+image with `./build/ultimate2c_boot_flash` while the controller is in BOOT
+mode.
+
+### Build it yourself
+
+1. Download the 1.06 beta firmware:
+
+   ```sh
+   curl -LO https://github.com/Alan-Gomes/8bitdo-macos/releases/download/firmware-ultimate-2c-v1.06-beta/8bitdo-ultimate-2c-wireless_v1.06-beta_model-0x301B.dat
+   ```
+
+2. Build the patched firmware (verifies the input and output hashes):
+
+   ```sh
+   ./patch-xbox-full-firmware.sh 8bitdo-ultimate-2c-wireless_v1.06-beta_model-0x301B.dat
+   ```
+
+   Output: `ultimate2c-1.06beta-xbox-full.dat`. It matches the prebuilt
+   download above byte for byte (same SHA-256), so it can be flashed with the
+   same [Flashing](#flashing) steps.
+
 
 ## Status
 
@@ -50,53 +111,6 @@ after its genuine Xbox Elite handshake, which this patch does not replicate).
 Everything else about the controller is stock: the 2.4 GHz connection mode,
 USB mode, button remapping and turbo combos are untouched. Only the Bluetooth
 presentation changed.
-
-## Requirements
-
-- 8BitDo Ultimate 2C Wireless controller (model `0x301B`)
-- The official 1.06 beta firmware as input (the only supported base image)
-- macOS with Xcode command line tools (`clang`) to build the tools
-
-## Usage
-
-1. Download the 1.06 beta firmware:
-
-   ```sh
-   curl -LO https://github.com/Alan-Gomes/8bitdo-macos/releases/download/firmware-ultimate-2c-v1.06-beta/8bitdo-ultimate-2c-wireless_v1.06-beta_model-0x301B.dat
-   ```
-
-2. Build the patched firmware (verifies the input and output hashes):
-
-   ```sh
-   ./patch-xbox-full-firmware.sh 8bitdo-ultimate-2c-wireless_v1.06-beta_model-0x301B.dat
-   ```
-
-   Output: `ultimate2c-1.06beta-xbox-full.dat`
-
-3. Put the controller in BOOT mode: hold **LB + RB** while plugging in the USB
-   cable. It enumerates as "8BitDo Boot".
-
-4. Flash:
-
-   ```sh
-   I_UNDERSTAND_BRICK_RISK=1 ./flash-firmware.sh ultimate2c-1.06beta-xbox-full.dat
-   ```
-
-   The script verifies the firmware hash, builds the boot tools, backs up the
-   controller's current flash to `backups/`, then writes the new firmware and
-   verifies the readback byte-for-byte.
-
-5. Forget and re-pair the controller in System Settings, under Bluetooth.
-   (The GATT database changed, so macOS must re-read it; this is only needed
-   once, not for ordinary reflashes.)
-
-6. Test. It appears in System Settings as a gamepad and works in any game
-   that accepts an Xbox controller. If it does not, check that it was
-   re-paired after flashing and that its battery has charge.
-
-To restore stock firmware, flash the unmodified 1.06 beta or any `backups/`
-image with `./build/ultimate2c_boot_flash` while the controller is in BOOT
-mode.
 
 ## Checksums
 
