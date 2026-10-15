@@ -1,39 +1,40 @@
 #!/bin/bash
-# Flashes the patched macOS support firmware to an 8BitDo Ultimate 2C Wireless
-# controller through its USB bootloader.
+# Flashes the patched firmware to an 8BitDo Ultimate 2C Wireless controller
+# through its USB bootloader.
 #
-#   I_UNDERSTAND_BRICK_RISK=1 ./flash-firmware.sh [patched-firmware.dat]
+#   I_UNDERSTAND_BRICK_RISK=1 ./flash-firmware.sh [firmware.dat]
 #
-# Verifies the firmware's SHA-256 before doing anything, builds the boot tools,
-# backs up the controller's current flash, then writes and verifies the new
-# firmware.
+# Only the deterministic result of ./patch-xbox-full-firmware.sh is accepted,
+# identified by its SHA-256. Verifies the firmware before doing anything,
+# builds the boot tools, backs up the controller's current flash, then writes
+# and verifies the new firmware.
 #
 # Put the controller in BOOT mode first: it must enumerate as "8BitDo Boot"
-# (USB VID:PID 0x2dc8:0x3208). Normal mode (0x2dc8:0x310a / BLE) will be
-# refused by the flash tool.
+# (hold LB + RB while plugging in the USB cable). Normal mode will be refused
+# by the flash tool.
 
 set -euo pipefail
 cd "$(dirname "$0")"
 
-# The only firmware this script will flash: the deterministic result of
-# patching the official 1.06 beta. Build it with ./patch-firmware.sh.
-PATCHED_SHA256="804d6475624c6e9b76381bd40391605bb757c25a84b326a5b4701c2d89523cb6"
+# Firmware builds this script will flash: the deterministic result of patching
+# the official 1.06 beta with patch-xbox-full-firmware.sh.
+XBOX_FULL_SHA256="18e2c710def1832177b17dbade1f81b9f2aa8c11bf7e5ce71567d0e6d05f34c1"
 
-FW="${1:-ultimate2c-1.06beta-macos.dat}"
+FW="${1:-ultimate2c-1.06beta-xbox-full.dat}"
 
 if [ ! -f "$FW" ]; then
   echo "no such file: $FW" >&2
-  echo "build it first with: ./patch-firmware.sh /path/to/1.06-beta-firmware.dat" >&2
+  echo "build it first with: ./patch-xbox-full-firmware.sh /path/to/1.06-beta-firmware.dat" >&2
   exit 1
 fi
 
 echo "verifying firmware..."
 ACTUAL="$(shasum -a 256 "$FW" | awk '{print $1}')"
-if [ "$ACTUAL" != "$PATCHED_SHA256" ]; then
+if [ "$ACTUAL" != "$XBOX_FULL_SHA256" ]; then
   echo "ERROR: this is not the expected patched firmware." >&2
-  echo "  expected sha256: $PATCHED_SHA256" >&2
+  echo "  expected sha256: $XBOX_FULL_SHA256" >&2
   echo "  actual sha256:   $ACTUAL" >&2
-  echo "  build it with: ./patch-firmware.sh /path/to/1.06-beta-firmware.dat" >&2
+  echo "  build it with: ./patch-xbox-full-firmware.sh /path/to/1.06-beta-firmware.dat" >&2
   exit 1
 fi
 echo "  firmware ok"
