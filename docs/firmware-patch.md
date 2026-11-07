@@ -219,3 +219,54 @@ any output whose SHA-256 is not the known-good result
 inspect a build, disassemble with the tc32 toolchain (see
 [developing-patches.md](developing-patches.md)) and compare with the offsets
 table above.
+
+## The Black Myth: Wukong edition
+
+The Wukong edition ships a different build of the same firmware. Compared with
+the 1.06 beta:
+
+| | 1.06 beta | Wukong factory image |
+|---|---|---|
+| PnP ID (`2A50`) | `02 c8 2d 02 60 01 00` (2DC8:6002) | `02 c8 2d 1b 30 01 00` (2DC8:301B) |
+| Telink `hsize` | `0x12324` | `0x12314` |
+| Trailer | 220 zero bytes at `0x12340` | 236 bytes of `0xFF` at `0x12330` |
+| Code after file `0x8DC0` | | 16 bytes earlier (version-constant changes in the USB vendor-command handlers) |
+| Mode selection, GPIO scan, BLE init, GATT tables, report builder | identical | identical, relocated |
+
+The stored Telink CRC of the factory image does not match the covered region
+even unmodified, and the controller runs it anyway, so the Wukong patch leaves
+the CRC word alone.
+
+`patch_ultimate2c_wukong_xbox_full.py` applies the same eleven changes at the
+relocated offsets (`0x11478` PnP, `0x11404` map, `0x11854` map entry,
+`0x1180C`/`0x11824` output entries, cave at `0x12330`). The cave and handler
+are byte-identical to the 1.06 beta build except the cave's return `tjl`
+(offset `+0x80`): the hook site (`fw 0xBB1C`) did not move but the cave did,
+so that one relative call is re-encoded. The notify routine (`fw 0x14628`) and
+the motor scheduler (`fw 0xFB04`) moved by the same 16 bytes as the trailer,
+so those two calls encode identically.
+
+### Why Bluetooth did not work on this unit, stock firmware included
+
+The main loop decides the connection mode at `fw 0xA4A8`: if the USB flag
+(`0x843478`) is set, USB mode; else `fw 0xC42C` decides between Bluetooth and
+2.4G. That function returns "2.4G" when either a force-2.4G byte (`0x843470`,
+only ever written by the USB vendor-command handlers) is non-zero or bit 28 of
+the button-state word (`0x843434`) is set. Bit 28 is produced by the button
+scan (`fw 0xC956`-`0xC968`) from bit 4 of the GPIO mask built at `fw 0xC3E4`,
+which is set when pin **PA7 reads low**. Only when BLE mode is chosen does the
+firmware reach the BLE init at `fw 0xA0FC` (`bls_ll_setAdvParam` /
+`setAdvData` / `setAdvEnable`; directed advertising to a bonded peer for 10 s
+first, falling back to undirected via the `ADV_DURATION_TIMEOUT` callback at
+`fw 0xA038`).
+
+On the unit this was developed on, a 3-minute BLE scan from the Mac saw no
+advertisement in either switch position, with the factory firmware and with
+the 1.06 beta build alike, while the flash held a valid MAC (`0x76000`) and no
+bond entries. Forcing `fw 0xC42C` to return 0 (`tmovs r0,#0; tjex lr`) made
+the stock firmware advertise and pair immediately, so the switch (or its GPIO
+read) is what fails on this hardware; which pin the Wukong board actually
+wires the switch to was not established. The Wukong build therefore forces
+Bluetooth mode, at the cost of 2.4G mode. If someone with a Wukong unit whose
+2.4G dongle works can report whether Bluetooth works for them on stock
+firmware, that would tell whether this is a board revision or a bad unit.

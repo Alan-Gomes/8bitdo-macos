@@ -19,6 +19,9 @@ cd "$(dirname "$0")"
 # Firmware builds this script will flash: the deterministic result of patching
 # the official 1.06 beta with patch-xbox-full-firmware.sh.
 XBOX_FULL_SHA256="18e2c710def1832177b17dbade1f81b9f2aa8c11bf7e5ce71567d0e6d05f34c1"
+# Same patch applied to the "Black Myth: Wukong" edition's factory image
+# (patch-wukong-xbox-full-firmware.sh).
+WUKONG_XBOX_FULL_SHA256="66fc9538e4cfa9e0596f3e94a78f9c5b5c6a4e2f19968724b663d5befb342a28"
 
 FW="${1:-ultimate2c-1.06beta-xbox-full.dat}"
 
@@ -30,9 +33,10 @@ fi
 
 echo "verifying firmware..."
 ACTUAL="$(shasum -a 256 "$FW" | awk '{print $1}')"
-if [ "$ACTUAL" != "$XBOX_FULL_SHA256" ]; then
+if [ "$ACTUAL" != "$XBOX_FULL_SHA256" ] && [ "$ACTUAL" != "$WUKONG_XBOX_FULL_SHA256" ]; then
   echo "ERROR: this is not the expected patched firmware." >&2
-  echo "  expected sha256: $XBOX_FULL_SHA256" >&2
+  echo "  expected sha256: $XBOX_FULL_SHA256 (1.06 beta build)" >&2
+  echo "               or: $WUKONG_XBOX_FULL_SHA256 (Wukong edition build)" >&2
   echo "  actual sha256:   $ACTUAL" >&2
   echo "  build it with: ./patch-xbox-full-firmware.sh /path/to/1.06-beta-firmware.dat" >&2
   exit 1
